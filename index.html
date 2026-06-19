@@ -124,7 +124,10 @@
   .haffix .hl{ color:var(--hid-l); font-size:13.5px; }
   .haffix .ht{ color:var(--hid-t); font-size:14.5px; line-height:1.5; }
   body.light .haffix .hl{ color:#b07c20; } body.light .haffix .ht{ color:#6a5226; }
-  .soul .sl{ color:var(--soul); font-size:14px; letter-spacing:.12em; }
+  .soul .sl{ color:var(--soul); font-size:14px; letter-spacing:.12em; margin-top:14px; display:block; }
+  .soul .srd{ color:#f0c873; font-size:16px; font-weight:600; margin-top:6px; font-family:"Noto Serif JP",serif; }
+  .soul .smean{ color:var(--hid-t); font-size:13.5px; margin:3px 0 8px; }
+  body.light .soul .srd{ color:#a9781c; } body.light .soul .smean{ color:#6a5226; }
   .soul .zh{ color:#f0c873; font-size:18px; font-weight:600; margin:4px 0 2px; font-family:"Noto Serif SC",serif; text-shadow:0 0 10px rgba(224,166,75,.35); }
   .soul .src{ color:#8a7340; font-size:12px; } .soul .gl{ color:var(--hid-t); font-size:14px; font-style:italic; margin-top:3px; }
   body.light .soul .zh{ color:#a9781c; text-shadow:none; } body.light .soul .gl{ color:#6a5226; }
@@ -180,6 +183,17 @@
     background:linear-gradient(180deg,#2c1c0e,#1a1009); border:1px solid #5a4326; border-radius:8px;
     padding:11px 22px; cursor:pointer; letter-spacing:.06em; }
   .maskbtn:hover{ color:#f2e6cf; box-shadow:0 0 16px var(--glow); }
+  /* category badge */
+  .catbadge{ display:inline-block; font-size:11px; letter-spacing:.2em; padding:3px 13px; border-radius:999px; margin-bottom:12px; font-family:"Noto Serif JP",serif; }
+  .catbadge.rec{ color:#e8b23a; border:1px solid #6b4e26; background:rgba(120,90,30,.16); }
+  .catbadge.heart{ color:#9aa6ff; border:1px solid #3a3f6b; background:rgba(70,80,150,.16); }
+  body.light .catbadge.rec{ color:#a9781c; border-color:#d8c08a; background:rgba(200,160,80,.14); }
+  body.light .catbadge.heart{ color:#5b62c8; border-color:#bcc2ef; background:rgba(90,100,180,.10); }
+  .wall .catbadge{ margin-bottom:0; margin-left:8px; padding:1px 9px; font-size:10px; vertical-align:1px; }
+  /* per-page brand logo */
+  .brandfix{ position:fixed; left:0; right:0; bottom:10px; text-align:center; z-index:5; pointer-events:none;
+    color:#4f463a; font-size:10.5px; letter-spacing:.22em; font-family:"Cormorant Garamond",serif; opacity:.6; }
+  body.light .brandfix{ color:#b3a489; }
 
   /* knot (long-press) */
   .knotwrap{ display:flex; flex-direction:column; align-items:center; gap:10px; }
@@ -240,7 +254,6 @@
     <div class="sys" style="margin-top:6px;"><b>未鑑定のユニークアイテム</b></div>
   </div>
   <button class="btn glow" onclick="startScan()">鑑定する</button>
-  <div class="fine">YOSHIKEN ✕ しょうのすけ</div>
 </section>
 
 <!-- loading -->
@@ -287,8 +300,8 @@
   <div class="invite">
     <h2>―― 永久パーティ招待 ――</h2>
     <div class="meta">
-      招待者：<b>あなたの同袍</b><br>
-      対象：<b>あなた</b><br>
+      招待者：<b>しょうのすけ</b><br>
+      対象：<b>YOSHIKEN</b><br>
       パーティ名：<b>同袍</b><br>
       人数：2 / 2（満員）<br>
       期限：<b>永久</b><br>
@@ -334,7 +347,6 @@
   <div class="sys center" style="letter-spacing:.12em;">実績 11 / 11</div>
   <div class="wall" id="wall2"></div>
   <button class="next" onclick="replay()">▸ 初回鑑定をもう一度</button>
-  <div class="fine">同袍 ―― 永久パーティ招待計画</div>
 </section>
 
 <script>
@@ -354,22 +366,22 @@ var item = {
     mods:[['全能力値 <span class="v">+25</span>'],['全属性耐性 <span class="v">+30%</span>'],['最大ライフと最大マナ <span class="v">+15%</span>'],['クールダウン回復速度が <span class="v">25%</span> 増加'],['あなたのスキルは中断されない','sig']],
     flavor:'古き東方の国より伝わりし指輪。語らずとも、その内には一つの物語が宿る。紐が結ばれるたび、二つの世界が時を越えて重なり、過ぎし日の記憶と、来たるべき希望とを、固く繋ぎ留める。',
     affixes:[['〔飾り紐・其の一〕','一筋の紐が、吉祥の花結びへと結われる。銀は重なる衣、中心の石はそれを留める釦。衣を同じくし、心を結び――一度締めれば、終わりはない。'],['〔魂の縛り〕','一度身に着ければ、外せない。外す必要もない。'],['〔時間の猶予 +∞〕','二人には、この一生を歩み切るのに必要な時間が、すべてある。急ぐ必要はない。'],['〔古びた光沢〕','長い年月を経てなお、中心の光だけは曇らない。']],
-    soul:{label:"― 魂のモッド ―",zh:"岂曰无衣，与子同袍。",src:"『詩経』秦風・無衣",gloss:"衣が無いと、誰が言う。君と、同じローブを纏おう。"} },
+    soul:{label:"― 魂のモッド ―",read:"〔同袍〕（どうほう）",mean:"― 戦友。苦楽を共にし、肩を並べて歩む仲間のこと。",zh:"岂曰无衣，与子同袍。",src:"『詩経』秦風・無衣",gloss:"「衣が無いなんて言わせない。君と同じローブを纏い、共に征こう」"} },
   zh:{ name:"結袂之環", base:"银戒指", req:'需要 等级 <b>30</b>',
     implicit:'已发现物品的稀有度提高 <span class="v">27%</span>',
     mods:[['全属性 <span class="v">+25</span>'],['所有元素抗性 <span class="v">+30%</span>'],['最大生命与最大魔力 <span class="v">+15%</span>'],['冷却回复速度加快 <span class="v">25%</span>'],['你的技能无法被打断','sig']],
     flavor:'这是一枚来自古老东方国度的戒指，承载着一段不言而喻的故事。每一次结扣相系，仿佛两个世界在时光中相连，将过往的记忆与未来的希望，紧紧相扣。',
     affixes:[['〔花结·其一〕','一根绳，盘成吉祥的花结；银是层叠的衣，钻是系紧的扣。衣以同袍，结以同心——一旦系上，便无始无终。'],['〔灵魂绑定〕','一旦佩戴，无法卸下；亦无需卸下。'],['〔时间裕度 +∞〕','你们拥有走完这一生所需的全部时间，无需着急。'],['〔古旧光泽〕','戒环虽历经年月，唯独中心那点光，不曾蒙尘。']],
-    soul:{label:"— 灵魂词缀 —",zh:"岂曰无衣，与子同袍。",src:"《诗经》秦风·无衣",gloss:"谁说没有衣裳？我与你，同披一件。"} },
+    soul:{label:"— 灵魂词缀 —",read:"〔同袍〕（tóng páo）",mean:"— 战友；同披一件法袍、苦乐与共、并肩同行的伙伴。",zh:"岂曰无衣，与子同袍。",src:"《诗经》秦风·无衣",gloss:"谁说没有衣裳？我与你，同披一件法袍，并肩同行。"} },
   en:{ name:"Ring of Bound Sleeves", base:"Silver Ring", req:'Requires Level <b>30</b>',
     implicit:'<span class="v">27%</span> increased Rarity of Items found',
     mods:[['<span class="v">+25</span> to all Attributes'],['<span class="v">+30%</span> to all Elemental Resistances'],['<span class="v">+15%</span> to maximum Life and maximum Mana'],['<span class="v">25%</span> increased Cooldown Recovery Rate'],['Your Skills cannot be interrupted','sig']],
     flavor:'A ring from an ancient kingdom of the East, bearing a story that needs no telling. Each time the cord is bound, two worlds are joined across time \u2014 binding the memories of the past to the hopes yet to come.',
     affixes:[['\u3014First Knot\u3015','A single cord, knotted into a flower of good fortune; the silver, layered robes; the stone, the button that binds them. Same robe, same heart \u2014 once tied, it never ends.'],['\u3014Soulbound\u3015','Once worn, it cannot be removed. Nor need it be.'],['\u3014Time to Spare +\u221E\u3015','You have all the time you need to walk a whole life together. No need to hurry.'],['\u3014Aged Luster\u3015','Worn by the years, yet the light at its center has never dimmed.']],
-    soul:{label:"\u2014 SOUL AFFIX \u2014",zh:"岂曰无衣，与子同袍。",src:"Book of Songs",gloss:"Who says we have no robes? I share my robe with you."} }
+    soul:{label:"\u2014 SOUL AFFIX \u2014",read:"\u3014T\u00f3ng P\u00e1o\u3015",mean:"\u2014 Comrades-in-arms; sharing one robe, through thick and thin, walking side by side.",zh:"岂曰无衣，与子同袍。",src:"Book of Songs",gloss:"Who says we have no robes? Share mine \u2014 and let us march together."} }
 };
 
-var SEP='<div class="sep"><i></i><b></b><i></i></div>';
+var SEP='<div class="sep"><i></i></div>';
 function ttHTML(d, ring, unlocked){
   var h='<div class="icon-wrap"><div class="icon"><img src="'+ring+'" alt=""></div></div>';
   h+='<div class="head"><div class="titlerow">'+volSVG('l')+'<div class="titlecol"><div class="name">'+d.name+'</div><div class="base">'+d.base+'</div></div>'+volSVG('r')+'</div></div>';
@@ -380,7 +392,7 @@ function ttHTML(d, ring, unlocked){
   if(unlocked){
     h+=SEP+'<div>'+d.affixes.map(function(a){return '<div class="haffix"><div class="hl">'+a[0]+'</div><div class="ht">'+a[1]+'</div></div>';}).join('');
     var s=d.soul;
-    h+='<div class="haffix soul"><div class="sl">'+s.label+'</div><div class="zh">'+s.zh+'</div><div class="src">'+s.src+'</div><div class="gl">'+s.gloss+'</div></div></div>';
+    h+='<div class="haffix soul"><div class="sl">'+s.label+'</div><div class="srd">'+s.read+'</div><div class="smean">'+s.mean+'</div><div class="zh">'+s.zh+'</div><div class="gl">'+s.gloss+'</div><div class="src">'+s.src+'</div></div></div>';
   }
   h+='</div>';
   return h;
@@ -391,20 +403,20 @@ function volSVG(side){
 
 /* ===== achievements ===== */
 var ACH = [
-  {t:"初遭遇 ― 未知の存在",hidden:true,d:"「木材加工室」にて、ある寡黙な人物と初めて遭遇。友好的リアクション一切なし、自己紹介の間も表情ゼロ、対人距離は最大値。（2017年10月）"},
-  {t:"レアエリート ― 黄昏の常連",d:"夕刻にのみ出現する人物。目的は長らく「多忙（理由非公開）」。観察の末、好奇心が上限に達した。"},
-  {t:"隠しエリア ― 二人だけの深夜チャンネル",d:"非公開の会話エリアへ幾度も。話題の深度は推奨レベルを大きく超過。在室人数：常に 2。"},
-  {t:"動機、ロックオン",hidden:true,d:"検出 ―「研究室」へ向かう真の動機が「学業」から「とある人物」へ書き換えられた。"},
-  {t:"★ 聖夜のパーティ申請",d:"12月25日、限定時間枠内に対象へパーティ申請を送信。応答：「いいよ。」 ― パーティ関係、正式成立。（2017年12月25日）"},
-  {t:"拠点 ― 共有セーブポイント",d:"双方が初めて同一のリスポーン地点と倉庫を共有。拠点の防御レベルは時間とともに上昇。（2021年1月30日）"},
-  {t:"ワールドボス ― カイワ",sub:"―― 悪魔（あくま）でカイワですから ――",boss:true,d:"極めて命中させにくいワールドボス。戦闘後は常に「今のは戦闘ではない、ただの普通の会話だ」と判定。討伐進度：討伐不能。",counter:true,tap:true},
-  {t:"防御機構 ― 沈黙の盾（甲羅）",d:"過度な感情的圧力を受けると盾を展開し甲羅へ撤退、強行突破を無効化。攻略法：強行を止め、盾が自然に解けるのを待つ。装備者は習得済み。"},
-  {t:"スキル習得 ― 行動で示す心",d:"高コストの「言葉の連打」を捨て、持続する隠しパッシブ「沈黙の寄り添い」を習得。味方に「離れない」と示し続ける。"},
-  {t:"鏡",hidden:true,d:"長き同行の果てに、相手の中へ自分自身の輪郭を見た。稀少状態「不安の中の静けさ」を習得。"},
+  {t:"初遭遇 ― 未知の存在",hidden:true,cat:"rec",d:"「木材加工室」にて、ある寡黙な人物と初めて遭遇。友好的リアクション一切なし、自己紹介の間も表情ゼロ、対人距離は最大値。（2017年10月）"},
+  {t:"レアエリート ― 黄昏の常連",cat:"rec",d:"夕刻にのみ出現する人物。観察の末、好奇心が上限に達した。"},
+  {t:"隠しエリア ― 二人だけの深夜チャンネル",cat:"rec",d:"非公開の会話エリアへ幾度も。話題の深度は推奨レベルを大きく超過。在室人数：常に 2。"},
+  {t:"動機、ロックオン",hidden:true,cat:"heart",d:"検出 ―「研究室」へ向かう真の動機が「学業」から「とある人物」へ書き換えられた。"},
+  {t:"★ 聖夜のパーティ申請",cat:"rec",d:"12月25日、限定時間枠内に対象へパーティ申請を送信。応答：「いいよ。」 ― パーティ関係、正式成立。（2017年12月25日）"},
+  {t:"拠点 ― 共有セーブポイント",cat:"rec",d:"双方が初めて同一のリスポーン地点と倉庫を共有。拠点の防御レベルは時間とともに上昇。（2021年1月30日）"},
+  {t:"ワールドボス ― カイワ",sub:"―― 悪魔（あくま）でカイワですから ――",boss:true,cat:"rec",d:"極めて命中させにくいワールドボス。戦闘後は常に「今のは戦闘ではない、ただの普通の会話だ」と判定。討伐進度：討伐不能。",counter:true,tap:true},
+  {t:"防御機構 ― 沈黙の盾（甲羅）",hidden:true,cat:"heart",d:"過度な感情的圧力を受けると盾を展開し甲羅へ撤退、強行突破を無効化。攻略法：強行を止め、盾が自然に解けるのを待つ。装備者は習得済み。"},
+  {t:"スキル習得 ― 行動で示す心",hidden:true,cat:"heart",d:"高コストの「言葉の連打」を捨て、持続する隠しパッシブ「沈黙の寄り添い」を習得。味方に「離れない」と示し続ける。"},
+  {t:"鏡",hidden:true,cat:"heart",d:"長き同行の果てに、相手の中へ自分自身の輪郭を見た。稀少状態「不安の中の静けさ」を習得。"},
   {t:"★ 最終実績 ― 同袍",d:"これは運命に定められた道ではなく、幾度も選び取られてきた道だと確認した。達成条件：二人とも、なお歩み続ける意志があること。"}
 ];
 function achHTML(a){
-  var h='<div class="at">'+a.t+(a.sub?'　<span class="asub">'+a.sub+'</span>':'')+'</div><div class="ad">'+a.d+'</div>';
+  var h='<div class="at">'+a.t+(a.cat?'<span class="catbadge '+a.cat+'">'+(a.cat==='rec'?'記録':'心')+'</span>':'')+(a.sub?'<br><span class="asub">'+a.sub+'</span>':'')+'</div><div class="ad">'+a.d+'</div>';
   if(a.counter) h+='<div class="ctr"><div class="lab">連続パーティ継続</div><div class="num cnt-together">'+togetherDays()+' 日</div><div class="lab" style="margin-top:2px;">―― なお継続中</div></div>';
   if(a.tap) h+='<div class="tap">▸ タップで「時の観測者」</div>';
   return h;
@@ -474,10 +486,14 @@ function acardHTML(idx){
   var a=ACH[idx];
   var title = a.boss ? 'カイワ' : a.t.replace('★ ','').replace('★','');
   var h='<div class="acap">'+cap(idx)+'</div><div class="arule"></div>';
+  if(a.cat) h+='<div class="catbadge '+a.cat+'">'+(a.cat==='rec'?'記録':'心')+'</div>';
   h+='<div class="at">'+title+'</div>';
   if(a.sub) h+='<div class="asub">'+a.sub+'</div>';
   h+='<div class="ad">'+a.d+'</div>';
   if(a.counter) h+='<div class="bcounter counter"><div class="lab">連続パーティ継続</div><div class="num cnt-together">'+togetherDays()+' 日</div><div class="lab" style="margin-top:2px;">―― なお継続中</div></div>';
+  if(idx===10){ var s=item[curLang].soul;
+    h+='<div class="haffix soul" style="margin-top:18px;"><div class="srd">'+s.read+'</div><div class="smean">'+s.mean+'</div><div class="zh">'+s.zh+'</div><div class="gl">'+s.gloss+'</div><div class="src">'+s.src+'</div></div>';
+  }
   return h;
 }
 function startStory(){ sp=0; renderStory(); show('s-story'); }
@@ -485,12 +501,14 @@ function renderStory(){
   var idx=STORY[sp], a=ACH[idx];
   var card=document.getElementById('storyCard'), next=document.getElementById('storyNext');
   card.className='acard'+(a.boss?' boss':'');
+  card.style.transition='opacity .5s ease'; card.style.opacity='1';
   if(a.hidden){
-    card.innerHTML='<div class="acap">'+cap(idx)+'</div><div class="arule"></div><div class="at">？？？</div><div class="ad" style="color:#6a6256;">―― 未解禁の記録 ――</div><button class="maskbtn" id="unmask">▸ 記録を解禁</button>';
+    card.innerHTML='<div class="acap">'+cap(idx)+'</div><div class="arule"></div><div class="at">？？？</div><div class="ad" style="color:#6a6256;">―― 未解禁の記録 ――</div>';
     next.style.visibility='hidden';
-    document.getElementById('unmask').addEventListener('click',function(){
-      card.innerHTML=acardHTML(idx); next.style.visibility='visible';
-    });
+    setTimeout(function(){
+      card.style.opacity='0';
+      setTimeout(function(){ card.innerHTML=acardHTML(idx); card.style.opacity='1'; next.style.visibility='visible'; }, 520);
+    }, 1150);
   }else{
     card.innerHTML=acardHTML(idx)+(a.tap?'<button class="maskbtn" onclick="openNPC()">▸ 時の観測者を呼ぶ</button>':'');
     next.style.visibility='visible';
@@ -517,7 +535,7 @@ function doReveal(){ revealed=true; if(raf)cancelAnimationFrame(raf);
   document.getElementById('knot').style.display='none'; document.getElementById('hh').textContent='― 隠しモッド、解読完了 ―';
   var d=item[curLang], list=document.getElementById('affixlist'), html='';
   d.affixes.forEach(function(a){ html+='<div class="ln"><div class="haffix"><div class="hl">'+a[0]+'</div><div class="ht">'+a[1]+'</div></div></div>'; });
-  var s=d.soul; html+='<div class="ln"><div class="haffix soul"><div class="sl">'+s.label+'</div><div class="zh">'+s.zh+'</div><div class="src">'+s.src+'</div><div class="gl">'+s.gloss+'</div></div></div>';
+  var s=d.soul; html+='<div class="ln"><div class="haffix soul"><div class="sl">'+s.label+'</div><div class="srd">'+s.read+'</div><div class="smean">'+s.mean+'</div><div class="zh">'+s.zh+'</div><div class="gl">'+s.gloss+'</div><div class="src">'+s.src+'</div></div></div>';
   list.innerHTML=html;
   var lns=list.querySelectorAll('.ln');
   lns.forEach(function(el,i){ setTimeout(function(){ el.classList.add('show'); if(i===lns.length-1) document.getElementById('affixNext').style.visibility='visible'; }, 250+i*460); });
@@ -588,6 +606,9 @@ window.addEventListener('load', function(){
   setupDeny();
 });
 </script>
+
+<!-- per-page brand -->
+<div class="brandfix">YOSHIKEN ✕ しょうのすけ</div>
 
 <!-- npc overlay -->
 <div class="overlay" id="overlay">
