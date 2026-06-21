@@ -36,7 +36,6 @@
   .screen.on{ display:flex; animation:fade .6s ease both; }
   .screen.tall{ justify-content:flex-start; padding-top:42px; }
   @keyframes fade{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
-  @keyframes reduce{}
   @media (prefers-reduced-motion:reduce){ .screen.on{ animation:none; } }
 
   .center{ text-align:center; }
@@ -155,7 +154,6 @@
   .ach .at{ color:var(--uniq-l); font-size:14.5px; font-weight:600; font-family:"Noto Serif JP",serif; }
   .ach .asub{ color:var(--mute); font-size:11.5px; }
   .ach .ad{ color:#bdb6a8; font-size:13px; line-height:1.5; margin-top:3px; font-family:"Noto Serif JP",serif; }
-  .ach.locked .at{ color:#6a6256; } .ach.locked .ad{ color:#5a5247; }
   .ach.boss{ border-color:#5a3a20; box-shadow:0 0 14px rgba(175,96,37,.12) inset; cursor:pointer; }
   .ach.boss:hover{ border-color:var(--uniq); }
   .ach .ctr{ margin-top:7px; padding-top:7px; border-top:1px solid #2a2016; }
@@ -171,8 +169,10 @@
   .acap{ color:var(--hid-l); letter-spacing:.28em; font-size:12px; font-family:"Noto Serif JP",serif; }
   .acard.boss .acap{ color:#ff9a55; }
   .acard.final .acap{ color:#c2701a; }
+  .acard.heart .acap{ color:#9aa6ff; }
   .arule{ width:120px; height:1px; margin:11px auto 16px; background:linear-gradient(90deg,transparent,var(--uniq),transparent); }
   .acard.final .arule{ background:linear-gradient(90deg,transparent,#c2701a,transparent); }
+  .acard.heart .arule{ background:linear-gradient(90deg,transparent,#9aa6ff,transparent); }
   .acard .at{ color:var(--uniq-l); font-size:23px; font-weight:600; font-family:"Noto Serif JP",serif; line-height:1.3; }
   .acard.final .at{ color:#9c6a1e; }
   .acard .asub{ color:var(--mute); font-size:13px; margin-top:5px; }
@@ -183,6 +183,18 @@
     background:linear-gradient(180deg,#2c1c0e,#1a1009); border:1px solid #5a4326; border-radius:8px;
     padding:11px 22px; cursor:pointer; letter-spacing:.06em; }
   .maskbtn:hover{ color:#f2e6cf; box-shadow:0 0 16px var(--glow); }
+  /* staggered card reveal (used for normal + boss + hidden-unlock achievement cards) */
+  @keyframes bossFlash{ 0%,100%{opacity:1;} 50%{opacity:.3;} }
+  .acard.boss .acap.flash{ animation:bossFlash .3s ease 3; }
+  .acard .rv{ opacity:0; transform:translateY(9px); transition:opacity .75s ease, transform .75s ease; }
+  .acard .rv.show{ opacity:1; transform:none; }
+  /* result / verdict line — set apart from the main description */
+  .acard .ad-tail{ display:block; margin-top:10px; color:var(--uniq-l); font-size:14.5px; line-height:1.6; font-family:"Noto Serif JP",serif; }
+  /* status readout panel (counter + timekeeper button) — visually separated from the text above */
+  .acard .statuspanel{ margin-top:24px; padding-top:18px; border-top:1px dashed rgba(232,178,58,.25); }
+  .acard.boss .statuspanel{ border-top-color:rgba(255,154,85,.3); }
+  .acard .statuspanel .bcounter{ margin-top:0; }
+  .acard .statuspanel .maskbtn{ display:block; margin:18px auto 0; }
   /* category badge */
   .catbadge{ display:inline-block; font-size:11px; letter-spacing:.2em; padding:3px 13px; border-radius:999px; margin-bottom:12px; font-family:"Noto Serif JP",serif; }
   .catbadge.rec{ color:#e8b23a; border:1px solid #6b4e26; background:rgba(120,90,30,.16); }
@@ -239,8 +251,6 @@
   .npc .who{ color:var(--soul); letter-spacing:.2em; font-size:13px; font-family:"Noto Serif JP",serif; margin-bottom:14px; }
   .npc .line{ color:#e7d9bd; font-size:16px; line-height:2; font-family:"Noto Serif JP",serif; white-space:pre-wrap; }
   .npc .line .d{ color:#ff9a55; font-weight:600; }
-  .fine{ color:#4f463a; font-size:11px; letter-spacing:.1em; text-align:center; margin-top:34px; font-family:"Cormorant Garamond",serif; }
-  body.light .fine{ color:#b3a489; }
 </style>
 </head>
 <body>
@@ -250,10 +260,10 @@
 <!-- 0. intro -->
 <section class="screen on" id="s-intro">
   <div class="center">
-    <div class="sys">. . . 未知のエネルギーを検知 . . .</div>
-    <div class="sys" style="margin-top:6px;"><b>未鑑定のユニークアイテム</b></div>
+    <div class="sys" id="introMsg1">. . . 未知のエネルギーを検知 . . .</div>
+    <div class="sys" style="margin-top:6px;"><b id="introMsg2">未鑑定のユニークアイテム</b></div>
   </div>
-  <button class="btn glow" onclick="startScan()">鑑定する</button>
+  <button class="btn glow" id="scanBtn" onclick="startScan()">鑑定する</button>
 </section>
 
 <!-- loading -->
@@ -267,7 +277,7 @@
     <button data-l="ja" class="on">日本語</button><button data-l="zh">中文</button><button data-l="en">EN</button>
   </div>
   <div class="tooltip" id="itemTip"></div>
-  <button class="next" onclick="startStory();">▸ 続ける</button>
+  <button class="next" id="itemNext" onclick="startStory();">▸ 続ける</button>
 </section>
 
 <!-- 2. achievements: one per page -->
@@ -278,7 +288,7 @@
 
 <!-- 3. deep ident / hidden affixes -->
 <section class="screen tall" id="s-affix">
-  <div class="sys center">このアイテムには未公開のモッドが眠っている。</div>
+  <div class="sys center" id="affixIntro">このアイテムには未公開のモッドが眠っている。</div>
   <div class="knotwrap" id="knotwrap">
     <div class="hh" id="hh">飾り紐の紋様を長押しして解読</div>
     <div class="knot" id="knot" role="button" tabindex="0" aria-label="hold">
@@ -298,17 +308,17 @@
 <!-- 4. invite -->
 <section class="screen" id="s-invite">
   <div class="invite">
-    <h2>―― 永久パーティ招待 ――</h2>
+    <h2 id="inviteTitle">―― 永久パーティ招待 ――</h2>
     <div class="meta">
-      招待者：<b>しょうのすけ</b><br>
-      対象：<b>YOSHIKEN</b><br>
-      パーティ名：<b>同袍</b><br>
-      人数：2 / 2（満員）<br>
-      期限：<b>永久</b><br>
-      脱退機能：未実装
+      <span id="invFrom">招待者：</span><b>しょうのすけ</b><br>
+      <span id="invTo">対象：</span><b>YOSHIKEN</b><br>
+      <span id="invName">パーティ名：</span><b>同袍</b><br>
+      <span id="invCount">人数：2 / 2（満員）</span><br>
+      <span id="invLimit">期限：</span><b id="invForever">永久</b><br>
+      <span id="invLeave">脱退機能：未実装</span>
     </div>
     <div class="btns" id="inviteBtns">
-      <button class="btn glow" onclick="accept()">永久パーティに参加する</button>
+      <button class="btn glow" id="acceptBtn" onclick="accept()">永久パーティに参加する</button>
       <button class="deny" id="denyBtn">拒否</button>
     </div>
     <div class="sys" id="denyMsg" style="min-height:18px; margin-top:10px;"></div>
@@ -344,15 +354,15 @@
     <div class="counter" id="cTogether"></div>
     <div class="counter" id="cPerm"></div>
   </div>
-  <div class="sys center" style="letter-spacing:.12em;">実績 11 / 11</div>
+  <div class="sys center" id="achCount" style="letter-spacing:.12em;">実績 11 / 11</div>
   <div class="wall" id="wall2"></div>
-  <button class="next" onclick="replay()">▸ 初回鑑定をもう一度</button>
+  <button class="next" id="replayBtn" onclick="replay()">▸ 初回鑑定をもう一度</button>
 </section>
 
 <script>
 /* ===== constants (editable) ===== */
 var TOGETHER_DATE = "2017-12-25";   // 連続パーティ継続の起点
-var PROPOSAL_DATE = "2026-06-20";   // 永久パーティの起点（求婚日）
+var PROPOSAL_DATE = "2026-06-19";   // 永久パーティの起点（求婚日）
 
 function daysFrom(s){ var d=(Date.now()-new Date(s+"T00:00:00").getTime())/86400000; return Math.floor(d); }
 function togetherDays(){ return Math.max(0, daysFrom(TOGETHER_DATE)); }
@@ -372,13 +382,13 @@ var item = {
     mods:[['全属性 <span class="v">+25</span>'],['所有元素抗性 <span class="v">+30%</span>'],['最大生命与最大魔力 <span class="v">+15%</span>'],['冷却回复速度加快 <span class="v">25%</span>'],['你的技能无法被打断','sig']],
     flavor:'这是一枚来自古老东方国度的戒指，承载着一段不言而喻的故事。每一次结扣相系，仿佛两个世界在时光中相连，将过往的记忆与未来的希望，紧紧相扣。',
     affixes:[['〔花结·其一〕','一根绳，盘成吉祥的花结；银是层叠的衣，钻是系紧的扣。衣以同袍，结以同心——一旦系上，便无始无终。'],['〔灵魂绑定〕','一旦佩戴，无法卸下；亦无需卸下。'],['〔时间裕度 +∞〕','你们拥有走完这一生所需的全部时间，无需着急。'],['〔古旧光泽〕','戒环虽历经年月，唯独中心那点光，不曾蒙尘。']],
-    soul:{label:"— 灵魂词缀 —",read:"〔同袍〕（tóng páo）",mean:"— 战友；同披一件法袍、苦乐与共、并肩同行的伙伴。",zh:"岂曰无衣，与子同袍。",src:"《诗经》秦风·无衣",gloss:"谁说没有衣裳？我与你，同披一件法袍，并肩同行。"} },
+    soul:{label:"— 灵魂词缀 —",read:"〔同袍〕",mean:"— 战友；同披一件战袍、苦乐与共、并肩同行的伙伴。",zh:"岂曰无衣，与子同袍。",src:"《诗经》秦风·无衣",gloss:"谁说没有衣裳？我与你，同披一件战袍，并肩同行。"} },
   en:{ name:"Ring of Bound Sleeves", base:"Silver Ring", req:'Requires Level <b>30</b>',
     implicit:'<span class="v">27%</span> increased Rarity of Items found',
     mods:[['<span class="v">+25</span> to all Attributes'],['<span class="v">+30%</span> to all Elemental Resistances'],['<span class="v">+15%</span> to maximum Life and maximum Mana'],['<span class="v">25%</span> increased Cooldown Recovery Rate'],['Your Skills cannot be interrupted','sig']],
     flavor:'A ring from an ancient kingdom of the East, bearing a story that needs no telling. Each time the cord is bound, two worlds are joined across time \u2014 binding the memories of the past to the hopes yet to come.',
     affixes:[['\u3014First Knot\u3015','A single cord, knotted into a flower of good fortune; the silver, layered robes; the stone, the button that binds them. Same robe, same heart \u2014 once tied, it never ends.'],['\u3014Soulbound\u3015','Once worn, it cannot be removed. Nor need it be.'],['\u3014Time to Spare +\u221E\u3015','You have all the time you need to walk a whole life together. No need to hurry.'],['\u3014Aged Luster\u3015','Worn by the years, yet the light at its center has never dimmed.']],
-    soul:{label:"\u2014 SOUL AFFIX \u2014",read:"\u3014T\u00f3ng P\u00e1o\u3015",mean:"\u2014 Comrades-in-arms; sharing one robe, through thick and thin, walking side by side.",zh:"岂曰无衣，与子同袍。",src:"Book of Songs",gloss:"Who says we have no robes? Share mine \u2014 and let us march together."} }
+    soul:{label:"\u2014 SOUL AFFIX \u2014",read:"\u3014\u540c\u888d\u3015\uff08T\u00f3ng P\u00e1o\uff09",mean:"\u2014 Comrades-in-arms; sharing one robe, through thick and thin, walking side by side.",zh:"岂曰无衣，与子同袍。",src:"Book of Songs",gloss:"Who says we have no robes? Share mine \u2014 and let us march together."} }
 };
 
 var SEP='<div class="sep"><i></i></div>';
@@ -392,7 +402,7 @@ function ttHTML(d, ring, unlocked){
   if(unlocked){
     h+=SEP+'<div>'+d.affixes.map(function(a){return '<div class="haffix"><div class="hl">'+a[0]+'</div><div class="ht">'+a[1]+'</div></div>';}).join('');
     var s=d.soul;
-    h+='<div class="haffix soul"><div class="sl">'+s.label+'</div><div class="srd">'+s.read+'</div><div class="smean">'+s.mean+'</div><div class="zh">'+s.zh+'</div><div class="gl">'+s.gloss+'</div><div class="src">'+s.src+'</div></div></div>';
+    h+='<div class="haffix soul"><div class="sl">'+s.label+'</div>'+(s.read?'<div class="srd">'+s.read+'</div>':'')+'<div class="smean">'+s.mean+'</div><div class="zh">'+s.zh+'</div><div class="gl">'+s.gloss+'</div><div class="src">'+s.src+'</div></div></div>';
   }
   h+='</div>';
   return h;
@@ -403,29 +413,140 @@ function volSVG(side){
 
 /* ===== achievements ===== */
 var ACH = [
-  {t:"初遭遇 ― 未知の存在",hidden:true,cat:"rec",d:"「木材加工室」にて、ある寡黙な人物と初めて遭遇。友好的リアクション一切なし、自己紹介の間も表情ゼロ、対人距離は最大値。（2017年10月）"},
-  {t:"レアエリート ― 黄昏の常連",cat:"rec",d:"夕刻にのみ出現する人物。観察の末、好奇心が上限に達した。"},
-  {t:"隠しエリア ― 二人だけの深夜チャンネル",cat:"rec",d:"非公開の会話エリアへ幾度も。話題の深度は推奨レベルを大きく超過。在室人数：常に 2。"},
-  {t:"動機、ロックオン",hidden:true,cat:"heart",d:"検出 ―「研究室」へ向かう真の動機が「学業」から「とある人物」へ書き換えられた。"},
-  {t:"★ 聖夜のパーティ申請",cat:"rec",d:"12月25日、限定時間枠内に対象へパーティ申請を送信。応答：「いいよ。」 ― パーティ関係、正式成立。（2017年12月25日）"},
-  {t:"拠点 ― 共有セーブポイント",cat:"rec",d:"双方が初めて同一のリスポーン地点と倉庫を共有。拠点の防御レベルは時間とともに上昇。（2021年1月30日）"},
-  {t:"ワールドボス ― カイワ",sub:"―― 悪魔（あくま）でカイワですから ――",boss:true,cat:"rec",d:"極めて命中させにくいワールドボス。戦闘後は常に「今のは戦闘ではない、ただの普通の会話だ」と判定。討伐進度：討伐不能。",counter:true,tap:true},
-  {t:"防御機構 ― 沈黙の盾（甲羅）",hidden:true,cat:"heart",d:"過度な感情的圧力を受けると盾を展開し甲羅へ撤退、強行突破を無効化。攻略法：強行を止め、盾が自然に解けるのを待つ。装備者は習得済み。"},
-  {t:"スキル習得 ― 行動で示す心",hidden:true,cat:"heart",d:"高コストの「言葉の連打」を捨て、持続する隠しパッシブ「沈黙の寄り添い」を習得。味方に「離れない」と示し続ける。"},
-  {t:"鏡",hidden:true,cat:"heart",d:"長き同行の果てに、相手の中へ自分自身の輪郭を見た。稀少状態「不安の中の静けさ」を習得。"},
-  {t:"★ 最終実績 ― 同袍",d:"これは運命に定められた道ではなく、幾度も選び取られてきた道だと確認した。達成条件：二人とも、なお歩み続ける意志があること。"}
+  {hidden:true,cat:"rec",
+    t:{ja:"初遭遇 ― 未知の存在",zh:"初次遭遇 ― 未知的存在",en:"First Encounter ― Unknown Entity"},
+    d:{ja:"「木材加工室」にて、ある寡黙な人物と初めて遭遇。友好的リアクション一切なし、自己紹介の間も表情ゼロ、対人距離は最大値。（2017年10月）",
+       zh:"在「木材加工室」首次遭遇一位沉默寡言的人物。无任何友好反应，自我介绍全程零表情，人际距离保持在最大值。（2017年10月）",
+       en:"First encountered a quiet, reserved figure in the \u201cWoodworking Room.\u201d No friendly reaction whatsoever; zero expression throughout the introduction; interpersonal distance at maximum. (October 2017)"}},
+  {cat:"rec",
+    t:{ja:"レアエリート ― 黄昏の常連",zh:"稀有人物 ― 黄昏常客",en:"Rare Elite ― Twilight Regular"},
+    d:{ja:"夕刻にのみ出現する人物。観察の末、好奇心が上限に達した。",
+       zh:"只在黄昏时分出现的人物。经过持续观察，好奇心已达上限。",
+       en:"A figure who only appears at dusk. After prolonged observation, curiosity reached its cap."}},
+  {cat:"rec",
+    t:{ja:"隠しエリア ― 二人だけの深夜チャンネル",zh:"非公开 ― 两人专属的深夜频道",en:"Hidden Area ― Late-Night Channel for Two"},
+    d:{ja:"非公開の会話エリアへ幾度も。話題の深度は推奨レベルを大きく超過。在室人数：常に 2。",
+       zh:"多次进入非公开的聊天区域，话题深度远超推荐等级。在线人数：始终为 2。",
+       en:"Entered a private conversation channel time and again. Topic depth far exceeded the recommended level. Occupancy: always 2."}},
+  {hidden:true,cat:"heart",
+    t:{ja:"動機、ロックオン",zh:"隐秘动机已锁定",en:"Motive, Locked On"},
+    d:{ja:"検出 ―「研究室」へ向かう真の動機が「学業」から「とある人物」へ書き換えられた。",
+       zh:"检测到 ―— 前往「研究室」的真实动机，已从「学业」改写为「某个人」。",
+       en:"Detected ― the true motive for heading to the \u201cLab\u201d has been rewritten from \u201cacademics\u201d to \u201ca certain person.\u201d"}},
+  {cat:"rec",
+    t:{ja:"★ 聖夜のパーティ申請",zh:"★ 圣诞夜晚的组队邀请",en:"\u2605 Holy Night Party Request"},
+    d:{ja:"12月25日、限定時間枠内に対象へパーティ申請を送信。応答：「いいよ。」",
+       zh:"12月25日，在这个特别的日子向对方发送组队申请。回应：「好啊。」",
+       en:"On December 25th, sent a party request to the target within a limited time window. Response: \u201cSure.\u201d"},
+    tail:{ja:"― パーティ関係、正式成立。（2017年12月25日）",
+          zh:"――组队关系正式成立。（2017年12月25日）",
+          en:"\u2015 Party relationship officially established. (December 25, 2017)"}},
+  {cat:"rec",
+    t:{ja:"拠点 ― 共有セーブポイント",zh:"据点 ― 共享存档点",en:"Base ― Shared Save Point"},
+    d:{ja:"双方が初めて同一のリスポーン地点と倉庫を共有。拠点の防御レベルは時間とともに上昇。（2021年1月30日）",
+       zh:"双方首次共享同一个重生点与仓库。据点防御等级随时间持续提升。（2021年1月30日）",
+       en:"Both parties shared the same respawn point and storage for the first time. Base defense level rises steadily over time. (January 30, 2021)"}},
+  {boss:true,cat:"rec",counter:true,tap:true,
+    t:{ja:"ワールドボス ― カイワ",zh:"世界Boss ― 卡伊瓦",en:"World Boss ― Kaiwa"},
+    sub:{ja:"―― 悪魔（あくま）でカイワですから ――",zh:"―― 化身为恶魔的卡伊瓦（对话） ――",en:"\u2015\u2015 A Demon, hence \u201cKaiwa\u201d \u2015\u2015"},
+    d:{ja:"極めて命中させにくいワールドボス。戦闘後は常に「今のは戦闘ではない、ただの普通の会話だ」と判定。討伐進度：討伐不能。",
+       zh:"极难命中的世界Boss。战斗结束后总会被判定为「刚才不是战斗，只是普通的对话」。讨伐进度：无法讨伐。",
+       en:"An extremely hard-to-hit world boss. After every battle it's always ruled \u201cthat wasn't a fight, just an ordinary conversation.\u201d Defeat progress: undefeatable."}},
+  {hidden:true,cat:"heart",
+    t:{ja:"防御機構 ― 沈黙の盾（甲羅）",zh:"防御机制 ― 沉默之盾（龟壳）",en:"Defense Mechanism ― Shield of Silence (Shell)"},
+    d:{ja:"過度な感情的圧力を受けると盾を展開し甲羅へ撤退、強行突破を無効化。攻略法：強行を止め、盾が自然に解けるのを待つ。装備者は習得済み。",
+       zh:"承受过度的情绪压力时会展开护盾并退入龟壳，使强行突破失效。攻略方法：停止强攻，等待护盾自然解除。装备者已习得此应对方式。",
+       en:"Under excessive emotional pressure, deploys a shield and retreats into its shell, nullifying any forced breakthrough. Strategy: stop pushing, and wait for the shield to dissolve on its own. The wearer has already mastered this approach."}},
+  {hidden:true,cat:"heart",
+    t:{ja:"スキル習得 ― 行動で示す心",zh:"技能习得 ― 以行动表达的心",en:"Skill Learned ― A Heart Shown Through Action"},
+    d:{ja:"高コストの「言葉の連打」を捨て、持続する隠しパッシブ「沈黙の寄り添い」を習得。味方に「離れない」と示し続ける。",
+       zh:"舍弃高消耗的「连击式言语攻势」，习得持续型隐藏被动「沉默的陪伴」，不断向同伴证明「我在」。",
+       en:"Abandoned the high-cost \u201crapid-fire words\u201d skill in favor of a sustained hidden passive: \u201cQuiet Companionship.\u201d Keeps showing the ally, without words, \u201cI'm not leaving.\u201d"}},
+  {hidden:true,cat:"heart",
+    t:{ja:"鏡",zh:"镜",en:"Mirror"},
+    d:{ja:"長き同行の果てに、相手の中へ自分自身の輪郭を見た。稀少状態「不安の中の静けさ」を習得。",
+       zh:"在长久的同行之后，于理解对方的过程中看清了自己的内心。习得稀有状态「焦虑风暴下静谧域」。",
+       en:"After a long journey together, glimpsed the outline of oneself within the other. Acquired the rare state: \u201cStillness Within Unease.\u201d"}},
+  {t:{ja:"★ 最終実績 ― 同袍",zh:"★ 最终成就 ― 同袍",en:"\u2605 Final Achievement ― Tóng Páo"},
+    d:{ja:"これは運命に定められた道ではなく、幾度も選び取られてきた道だと確認した。達成条件：二人とも、なお歩み続ける意志があること。",
+       zh:"确认了这并非命运注定的道路，而是一次又一次被亲手选择的道路。达成条件：两人都携手同行的意愿。",
+       en:"Confirmed: this was never a road laid out by fate, but one chosen again and again, on purpose. Condition met: both are still willing to keep walking."}}
 ];
+function UItxt(k){
+  var L=curLang;
+  var T={
+    rec:{ja:"セーブ",zh:"存档",en:"Save Data"}, heart:{ja:"心",zh:"心",en:"Heart"},
+    together_label:{ja:"連続パーティ継続",zh:"连续组队天数",en:"Consecutive Party Days"},
+    together_cont:{ja:"―― なお継続中",zh:"―― 仍在继续",en:"\u2015\u2015 Still ongoing"},
+    perm_label:{ja:"永久パーティ",zh:"永久组队",en:"Permanent Party"},
+    tap_npc:{ja:"▸ タップで「時の観測者」",zh:"▸ 点击呼出「时间的观测者」",en:"\u25b8 Tap for the \u201cTimekeeper\u201d"},
+    npc_call:{ja:"▸ 時の観測者を呼ぶ",zh:"▸ 呼出「时间的观测者」",en:"\u25b8 Summon the Timekeeper"},
+    npcWho:{ja:"〔 時の観測者 〕",zh:"〔 时间的观测者 〕",en:"\u3014 The Timekeeper \u3015"},
+    npcClose:{ja:"▸ 閉じる",zh:"▸ 关闭",en:"\u25b8 Close"},
+    ach_count:{ja:"実績 11 / 11",zh:"成就 11 / 11",en:"Achievements 11 / 11"},
+    replay:{ja:"▸ 初回鑑定をもう一度",zh:"▸ 再次进行初次鉴定",en:"\u25b8 Replay First Identification"},
+    /* skip + intro */
+    skip:{ja:"スキップ ▸",zh:"跳过 ▸",en:"Skip \u25b8"},
+    intro1:{ja:". . . 未知のエネルギーを検知 . . .",zh:". . . 检测到未知的能量 . . .",en:". . . Unknown energy detected . . ."},
+    intro2:{ja:"未鑑定のユニークアイテム",zh:"未鉴定的传奇物品",en:"Unidentified Unique Item"},
+    scan:{ja:"鑑定する",zh:"鉴定",en:"Identify"},
+    /* loading */
+    load1:{ja:"接続を確立中……",zh:"正在建立连接……",en:"Establishing connection\u2026"},
+    load2:{ja:"アイテムデータを読込中……",zh:"正在读取物品数据……",en:"Loading item data\u2026"},
+    load3:{ja:"所持者を照合中……照合完了。",zh:"正在核对持有者……核对完成。",en:"Verifying owner\u2026 verified."},
+    load4:{ja:"鑑定、完了。",zh:"鉴定，完成。",en:"Identification complete."},
+    /* continue buttons */
+    cont:{ja:"▸ 続ける",zh:"▸ 继续",en:"\u25b8 Continue"},
+    /* affix screen */
+    affixIntro:{ja:"このアイテムには未公開のモッドが眠っている。",zh:"这件物品中，潜藏着尚未公开的词缀。",en:"This item conceals mods yet to be revealed."},
+    hhDefault:{ja:"飾り紐の紋様を長押しして解読",zh:"长按纹饰上的绳结以解读",en:"Press and hold the knot to decode"},
+    hhHolding:{ja:"共鳴中……紋様が解けてゆく……",zh:"共鸣中……纹饰正在解开……",en:"Resonating\u2026 the pattern is unraveling\u2026"},
+    hhDone:{ja:"― 隠しモッド、解読完了 ―",zh:"― 隐藏词缀，解读完成 ―",en:"\u2015 Hidden Mods Decoded \u2015"},
+    /* invite */
+    inviteTitle:{ja:"―― 永久パーティ招待 ――",zh:"―― 永久组队邀请 ――",en:"\u2015\u2015 Permanent Party Invitation \u2015\u2015"},
+    invFrom:{ja:"招待者：",zh:"邀请者：",en:"Inviter: "},
+    invTo:{ja:"対象：",zh:"对象：",en:"Target: "},
+    invName:{ja:"パーティ名：",zh:"队伍名称：",en:"Party Name: "},
+    invCount:{ja:"人数：2 / 2（満員）",zh:"人数：2 / 2（已满）",en:"Members: 2 / 2 (Full)"},
+    invLimit:{ja:"期限：",zh:"期限：",en:"Duration: "},
+    invForever:{ja:"永久",zh:"永久",en:"Forever"},
+    invLeave:{ja:"脱退機能：未実装",zh:"退出功能：未实装",en:"Leave Party: Not Implemented"},
+    acceptBtn:{ja:"永久パーティに参加する",zh:"加入永久组队",en:"Join the Permanent Party"},
+    denyBtn:{ja:"拒否",zh:"拒绝",en:"Decline"},
+    deny1:{ja:"この選択肢はまだ解放されていない。",zh:"该选项尚未解锁。",en:"This option has not yet been unlocked."},
+    deny2:{ja:"……そして、おそらく永久に実装されない。",zh:"……而且，恐怕永远都不会被实装。",en:"\u2026and likely never will be."},
+    /* confirm / finale */
+    finale:{ja:'パーティが成立した。<br><br>この瞬間より、二つのセーブデータは、もう離れない。<br>一筋の紐が結ばれ、その結び目は、二度と解けない。<br><br>急がなくていい。<br>この一生を、ゆっくりと歩み切るだけの時間が、<span class="em">私たちには、ある。</span>',
+           zh:'组队已成立。<br><br>从这一刻起，两份存档，再不分离。<br>一根绳结已系紧，这个结，再不会解开。<br><br>不必着急。<br>走完这一生所需要的全部时间，<span class="em">我们都有。</span>',
+           en:'The party has been formed.<br><br>From this moment, two save files will never part again.<br>A single knot has been tied, and it will never come undone.<br><br>There\u2019s no need to hurry.<br>We have all the time<span class="em"> we need to walk this whole life together.</span>'},
+    /* clear / reward */
+    questClear:{ja:"メインクエスト クリア　《 同袍 》",zh:"主线任务 完成　《 同袍 》",en:"Main Quest Complete \u3008 Tóng Páo \u3009"},
+    rewardLabel:{ja:"報酬を獲得：",zh:"获得奖励：",en:"Rewards obtained:"},
+    rewardRing:{ja:"結袂の環 ×1",zh:"結袂之環 ×1",en:"Ring of Bound Sleeves \u00d71"},
+    rewardMember:{ja:"永久パーティメンバー ×1",zh:"永久组队成员 ×1",en:"Permanent Party Member \u00d71"},
+    titleLabel:{ja:"称号：「同袍」",zh:"称号：「同袍」",en:"Title: \u201cTóng Páo\u201d"},
+    openBox:{ja:"▸ 指輪の箱を開けよ",zh:"▸ 打开戒指盒",en:"\u25b8 Open the Ring Box"},
+    /* story card meta */
+    capBoss:{ja:"WORLD BOSS",zh:"世界BOSS",en:"WORLD BOSS"},
+    capFinal:{ja:"FINAL ACHIEVEMENT　11 / 11",zh:"最终成就　11 / 11",en:"FINAL ACHIEVEMENT\u3000 11 / 11"},
+    capAch:{ja:"ACHIEVEMENT",zh:"成就",en:"ACHIEVEMENT"},
+    masked:{ja:"？？？",zh:"？？？",en:"???"},
+    maskedSub:{ja:"―― 未解禁の記録 ――",zh:"―― 尚未解锁的记录 ――",en:"\u2015\u2015 Locked Record \u2015\u2015"}
+  };
+  return T[k][L];
+}
 function achHTML(a){
-  var h='<div class="at">'+a.t+(a.cat?'<span class="catbadge '+a.cat+'">'+(a.cat==='rec'?'記録':'心')+'</span>':'')+(a.sub?'<br><span class="asub">'+a.sub+'</span>':'')+'</div><div class="ad">'+a.d+'</div>';
-  if(a.counter) h+='<div class="ctr"><div class="lab">連続パーティ継続</div><div class="num cnt-together">'+togetherDays()+' 日</div><div class="lab" style="margin-top:2px;">―― なお継続中</div></div>';
-  if(a.tap) h+='<div class="tap">▸ タップで「時の観測者」</div>';
+  var t=a.t[curLang], d=a.d[curLang], sub=a.sub?a.sub[curLang]:null, tail=a.tail?a.tail[curLang]:null;
+  var h='<div class="at">'+t+(a.cat?'<span class="catbadge '+a.cat+'">'+UItxt(a.cat)+'</span>':'')+(sub?'<br><span class="asub">'+sub+'</span>':'')+'</div><div class="ad">'+d+(tail?' '+tail:'')+'</div>';
+  if(a.counter) h+='<div class="ctr"><div class="lab">'+UItxt('together_label')+'</div><div class="num cnt-together">'+togetherDays()+(curLang==='zh'?' 天':curLang==='en'?' days':' 日')+'</div><div class="lab" style="margin-top:2px;">'+UItxt('together_cont')+'</div></div>';
+  if(a.tap) h+='<div class="tap">'+UItxt('tap_npc')+'</div>';
   return h;
 }
-function buildWall(el, allShow){
+function buildWall(el){
   el.innerHTML='';
   ACH.forEach(function(a,i){
     var d=document.createElement('div');
-    d.className='ach'+(a.boss?' boss':'')+(allShow?' show':'');
+    d.className='ach show'+(a.boss?' boss':'');
     d.innerHTML=achHTML(a);
     if(a.tap) d.addEventListener('click', openNPC);
     el.appendChild(d);
@@ -434,13 +555,31 @@ function buildWall(el, allShow){
 
 /* ===== Timekeeper NPC ===== */
 function npcText(){
-  return '……ほう。<span class="d">'+togetherDays()+'日</span>。よく続いたものじゃ。\n'
-    +'わしは時の流れをいくつも見てきたが、「カイワ」というボスを\n討伐できた者は、ひとりもおらん。お主らもじゃ。\n\n'
-    +'だがな ―― 倒せぬ相手と、毎晩むきあい続けること。\nそれを世間では「添い遂げる」と呼ぶ。\n\n'
-    +'ひとつ忠告じゃ：勝とうとするな。同じ側に立て。\n剣を置き、隣に座れ。\n\n'
-    +'……いや、説教が過ぎたな。達者で征け、同袍よ。';
+  var T={
+    ja:'……ほう。<span class="d">'+togetherDays()+'日</span>。よく続いたものじゃ。\n'
+      +'わしは時の流れをいくつも見てきたが、「カイワ」というボスを\n討伐できた者は、ひとりもおらん。お主らもじゃ。\n\n'
+      +'だがな ―― 倒せぬ相手と、毎晩むきあい続けること。\nそれを世間では「添い遂げる」と呼ぶ。\n\n'
+      +'ひとつ忠告じゃ：勝とうとするな。同じ側に立て。\n剣を置き、隣に座れ。\n\n'
+      +'……いや、説教が過ぎたな。達者で征け、同袍よ。',
+    zh:'……哦。<span class="d">'+togetherDays()+'天</span>。坚持得不错啊。\n'
+      +'吾见过无数时间的流转，但能讨伐「卡伊瓦」这个Boss的人，\n一个也没有。你们也是。\n\n'
+      +'但是啊 ―― 与无法战胜的对手，日日夜夜相对而坐。\n世人称这为「相伴一生」。\n\n'
+      +'一句忠告：不要试图获胜。站到同一边去。\n放下剑，坐到身旁。\n\n'
+      +'……唔，说教过头了。一路顺风吧，同袍。',
+    en:'…Hm. <span class="d">'+togetherDays()+' days</span>. You\u2019ve held on quite well.\n'
+      +'I\u2019ve watched countless flows of time, yet no one has ever\ndefeated the boss called \u201cKaiwa.\u201d Not even you two.\n\n'
+      +'But this \u2015\u2015 facing an undefeatable opponent, night after night.\nThe world has a word for that: \u201cgrowing old together.\u201d\n\n'
+      +'One piece of advice: don\u2019t try to win. Stand on the same side.\nPut down your sword, and sit beside them.\n\n'
+      +'\u2026Ah, I\u2019ve lectured too long. Travel well, comrades.'
+  };
+  return T[curLang];
 }
-function openNPC(){ document.getElementById('npcLine').innerHTML=npcText(); document.getElementById('overlay').classList.add('on'); }
+function openNPC(){
+  document.getElementById('npcWho').textContent=UItxt('npcWho');
+  document.getElementById('npcLine').innerHTML=npcText();
+  document.getElementById('npcClose').textContent=UItxt('npcClose');
+  document.getElementById('overlay').classList.add('on');
+}
 function closeNPC(){ document.getElementById('overlay').classList.remove('on'); }
 
 /* ===== screen manager ===== */
@@ -455,7 +594,7 @@ function show(id){
 /* ===== flow ===== */
 function startScan(){
   show('s-load');
-  var lines=['接続を確立中……','アイテムデータを読込中……','所持者を照合中……照合完了。','鑑定、完了。'];
+  var lines=[UItxt('load1'),UItxt('load2'),UItxt('load3'),UItxt('load4')];
   var box=document.getElementById('loadText'); box.innerHTML=''; var i=0;
   (function step(){
     if(i>=lines.length){ setTimeout(function(){ renderItem(); show('s-item'); }, 600); return; }
@@ -465,12 +604,37 @@ function startScan(){
 var curLang='ja';
 function renderItem(){ document.getElementById('itemTip').innerHTML=ttHTML(item[curLang], RING_DARK, false); }
 function renderCodexTip(){ document.getElementById('codexTip').innerHTML=ttHTML(item[curLang], RING_LIGHT, true); }
+function applyFlowLanguage(){
+  document.getElementById('skipBtn').textContent=UItxt('skip');
+  document.getElementById('introMsg1').textContent=UItxt('intro1');
+  document.getElementById('introMsg2').textContent=UItxt('intro2');
+  document.getElementById('scanBtn').textContent=UItxt('scan');
+  document.getElementById('itemNext').textContent=UItxt('cont');
+  document.getElementById('storyNext').textContent=UItxt('cont');
+  document.getElementById('affixIntro').textContent=UItxt('affixIntro');
+  document.getElementById('affixNext').textContent=UItxt('cont');
+  document.getElementById('inviteTitle').textContent=UItxt('inviteTitle');
+  document.getElementById('invFrom').textContent=UItxt('invFrom');
+  document.getElementById('invTo').textContent=UItxt('invTo');
+  document.getElementById('invName').textContent=UItxt('invName');
+  document.getElementById('invCount').textContent=UItxt('invCount');
+  document.getElementById('invLimit').textContent=UItxt('invLimit');
+  document.getElementById('invForever').textContent=UItxt('invForever');
+  document.getElementById('invLeave').textContent=UItxt('invLeave');
+  document.getElementById('acceptBtn').textContent=UItxt('acceptBtn');
+  document.getElementById('denyBtn').textContent=UItxt('denyBtn');
+  document.getElementById('confirmNext').textContent=UItxt('cont');
+  document.getElementById('finalNext').textContent=UItxt('cont');
+  document.getElementById('openBtn').textContent=UItxt('openBox');
+  if(!revealed) document.getElementById('hh').textContent=UItxt('hhDefault');
+}
 
 document.querySelectorAll('#lang button, #lang2 button').forEach(function(b){
   b.addEventListener('click',function(){
     curLang=b.dataset.l;
     document.querySelectorAll('#lang button, #lang2 button').forEach(function(x){ x.classList.toggle('on', x.dataset.l===curLang); });
-    renderItem(); if(document.getElementById('s-codex').classList.contains('on')) renderCodexTip();
+    renderItem(); applyFlowLanguage();
+    if(document.getElementById('s-codex').classList.contains('on')) renderCodexPage();
   });
 });
 
@@ -478,40 +642,64 @@ document.querySelectorAll('#lang button, #lang2 button').forEach(function(b){
 var STORY=[0,1,2,3,4,5,6,7,8,9]; // ACH indices; 6=カイワ boss; #11(同袍) shown separately at finale
 var sp=0;
 function cap(idx){ var a=ACH[idx];
-  if(a.boss) return 'WORLD BOSS';
-  if(idx===10) return 'FINAL ACHIEVEMENT　11 / 11';
-  return 'ACHIEVEMENT　'+('0'+(idx+1)).slice(-2)+' / 11';
+  if(a.boss) return UItxt('capBoss');
+  if(idx===10) return UItxt('capFinal');
+  return UItxt('capAch')+'　'+('0'+(idx+1)).slice(-2)+' / 11';
 }
 function acardHTML(idx){
   var a=ACH[idx];
-  var title = a.boss ? 'カイワ' : a.t.replace('★ ','').replace('★','');
+  var bossName={ja:'カイワ',zh:'卡伊瓦',en:'Kaiwa'};
+  var title = a.boss ? bossName[curLang] : a.t[curLang].replace('★ ','').replace('★','');
   var h='<div class="acap">'+cap(idx)+'</div><div class="arule"></div>';
-  if(a.cat) h+='<div class="catbadge '+a.cat+'">'+(a.cat==='rec'?'記録':'心')+'</div>';
+  if(a.cat) h+='<div class="catbadge '+a.cat+'">'+UItxt(a.cat)+'</div>';
   h+='<div class="at">'+title+'</div>';
-  if(a.sub) h+='<div class="asub">'+a.sub+'</div>';
-  h+='<div class="ad">'+a.d+'</div>';
-  if(a.counter) h+='<div class="bcounter counter"><div class="lab">連続パーティ継続</div><div class="num cnt-together">'+togetherDays()+' 日</div><div class="lab" style="margin-top:2px;">―― なお継続中</div></div>';
+  if(a.sub) h+='<div class="asub">'+a.sub[curLang]+'</div>';
+  h+='<div class="ad">'+a.d[curLang]+'</div>';
+  if(a.tail) h+='<div class="ad-tail">'+a.tail[curLang]+'</div>';
+  if(a.counter || a.tap){
+    h+='<div class="statuspanel">';
+    if(a.counter) h+='<div class="bcounter counter"><div class="lab">'+UItxt('together_label')+'</div><div class="num cnt-together">'+togetherDays()+(curLang==='zh'?' 天':curLang==='en'?' days':' 日')+'</div><div class="lab" style="margin-top:2px;">'+UItxt('together_cont')+'</div></div>';
+    if(a.tap) h+='<button class="maskbtn" onclick="openNPC()">'+UItxt('npc_call')+'</button>';
+    h+='</div>';
+  }
   if(idx===10){ var s=item[curLang].soul;
-    h+='<div class="haffix soul" style="margin-top:18px;"><div class="srd">'+s.read+'</div><div class="smean">'+s.mean+'</div><div class="zh">'+s.zh+'</div><div class="gl">'+s.gloss+'</div><div class="src">'+s.src+'</div></div>';
+    h+='<div class="haffix soul" style="margin-top:18px;">'+(s.read?'<div class="srd">'+s.read+'</div>':'')+'<div class="smean">'+s.mean+'</div><div class="zh">'+s.zh+'</div><div class="gl">'+s.gloss+'</div><div class="src">'+s.src+'</div></div>';
   }
   return h;
 }
 function startStory(){ sp=0; renderStory(); show('s-story'); }
+function staggerReveal(card, selectors, startDelay, gap){
+  var els=selectors.map(function(s){ return card.querySelector(s); }).filter(Boolean);
+  els.forEach(function(el){ el.classList.add('rv'); });
+  els.forEach(function(el,i){ setTimeout(function(){ el.classList.add('show'); }, startDelay+i*gap); });
+  return startDelay+els.length*gap;
+}
 function renderStory(){
   var idx=STORY[sp], a=ACH[idx];
   var card=document.getElementById('storyCard'), next=document.getElementById('storyNext');
-  card.className='acard'+(a.boss?' boss':'');
+  card.className='acard'+(a.boss?' boss':'')+(a.cat?' '+a.cat:'');
   card.style.transition='opacity .5s ease'; card.style.opacity='1';
   if(a.hidden){
-    card.innerHTML='<div class="acap">'+cap(idx)+'</div><div class="arule"></div><div class="at">？？？</div><div class="ad" style="color:#6a6256;">―― 未解禁の記録 ――</div>';
+    card.innerHTML='<div class="acap">'+cap(idx)+'</div><div class="arule"></div><div class="at">'+UItxt('masked')+'</div><div class="ad" style="color:#6a6256;">'+UItxt('maskedSub')+'</div>';
     next.style.visibility='hidden';
     setTimeout(function(){
       card.style.opacity='0';
-      setTimeout(function(){ card.innerHTML=acardHTML(idx); card.style.opacity='1'; next.style.visibility='visible'; }, 520);
+      setTimeout(function(){
+        card.innerHTML=acardHTML(idx); card.style.opacity='1'; next.style.visibility='visible';
+        staggerReveal(card, ['.at','.ad'], 120, 430);
+      }, 520);
     }, 1150);
+  }else if(a.boss){
+    card.innerHTML=acardHTML(idx);
+    next.style.visibility='hidden';
+    var capEl=card.querySelector('.acap'); if(capEl) capEl.classList.add('flash');
+    var t=staggerReveal(card, ['.catbadge','.at','.asub','.ad','.ad-tail','.statuspanel'], 600, 460);
+    setTimeout(function(){ next.style.visibility='visible'; }, t+300);
   }else{
-    card.innerHTML=acardHTML(idx)+(a.tap?'<button class="maskbtn" onclick="openNPC()">▸ 時の観測者を呼ぶ</button>':'');
-    next.style.visibility='visible';
+    card.innerHTML=acardHTML(idx);
+    next.style.visibility='hidden';
+    var t2=staggerReveal(card, ['.catbadge','.at','.asub','.ad','.ad-tail','.statuspanel'], 120, 430);
+    setTimeout(function(){ next.style.visibility='visible'; }, t2+200);
   }
   window.scrollTo(0,0);
 }
@@ -527,15 +715,15 @@ function frame(ts){ if(!t0)t0=ts; var p=Math.min((ts-t0)/1500,1);
   document.querySelector('#knot .prog').style.strokeDashoffset=LEN*(1-p);
   if(p>=1){ doReveal(); return; } raf=requestAnimationFrame(frame); }
 function startHold(e){ if(revealed)return; e.preventDefault();
-  document.getElementById('knotwrap').classList.add('holding'); document.getElementById('hh').textContent='共鳴中……紋様が解けてゆく……'; t0=0; raf=requestAnimationFrame(frame); }
+  document.getElementById('knotwrap').classList.add('holding'); document.getElementById('hh').textContent=UItxt('hhHolding'); t0=0; raf=requestAnimationFrame(frame); }
 function cancelHold(){ if(revealed)return; if(raf)cancelAnimationFrame(raf); raf=null;
-  document.getElementById('knotwrap').classList.remove('holding'); document.getElementById('hh').textContent='飾り紐の紋様を長押しして解読';
+  document.getElementById('knotwrap').classList.remove('holding'); document.getElementById('hh').textContent=UItxt('hhDefault');
   document.querySelector('#knot .prog').style.strokeDashoffset=LEN; }
 function doReveal(){ revealed=true; if(raf)cancelAnimationFrame(raf);
-  document.getElementById('knot').style.display='none'; document.getElementById('hh').textContent='― 隠しモッド、解読完了 ―';
+  document.getElementById('knot').style.display='none'; document.getElementById('hh').textContent=UItxt('hhDone');
   var d=item[curLang], list=document.getElementById('affixlist'), html='';
   d.affixes.forEach(function(a){ html+='<div class="ln"><div class="haffix"><div class="hl">'+a[0]+'</div><div class="ht">'+a[1]+'</div></div></div>'; });
-  var s=d.soul; html+='<div class="ln"><div class="haffix soul"><div class="sl">'+s.label+'</div><div class="srd">'+s.read+'</div><div class="smean">'+s.mean+'</div><div class="zh">'+s.zh+'</div><div class="gl">'+s.gloss+'</div><div class="src">'+s.src+'</div></div></div>';
+  var s=d.soul; html+='<div class="ln"><div class="haffix soul"><div class="sl">'+s.label+'</div>'+(s.read?'<div class="srd">'+s.read+'</div>':'')+'<div class="smean">'+s.mean+'</div><div class="zh">'+s.zh+'</div><div class="gl">'+s.gloss+'</div><div class="src">'+s.src+'</div></div></div>';
   list.innerHTML=html;
   var lns=list.querySelectorAll('.ln');
   lns.forEach(function(el,i){ setTimeout(function(){ el.classList.add('show'); if(i===lns.length-1) document.getElementById('affixNext').style.visibility='visible'; }, 250+i*460); });
@@ -547,14 +735,14 @@ function setupDeny(){
   var b=document.getElementById('denyBtn');
   function flee(){ denyCount++; var dx=(Math.random()*120-60), dy=(Math.random()*40-20);
     b.style.transform='translate('+dx+'px,'+dy+'px)';
-    document.getElementById('denyMsg').textContent = denyCount<2 ? 'この選択肢はまだ解放されていない。' : '……そして、おそらく永久に実装されない。'; }
+    document.getElementById('denyMsg').textContent = denyCount<2 ? UItxt('deny1') : UItxt('deny2'); }
   b.addEventListener('mouseenter',flee); b.addEventListener('click',function(e){ e.preventDefault(); flee(); });
 }
 function accept(){
   show('s-confirm'); document.body.classList.add('light');
-  document.getElementById('finaleText').innerHTML='パーティが成立した。<br><br>この瞬間より、二つのセーブデータは、もう離れない。<br>一筋の紐が結ばれ、その結び目は、二度と解けない。<br><br>急がなくていい。<br>この一生を、ゆっくりと歩み切るだけの時間が、<span class="em">私たちには、ある。</span>';
+  document.getElementById('finaleText').innerHTML=UItxt('finale');
   var pc=document.getElementById('permCounter');
-  pc.innerHTML='<div class="lab">永久パーティ</div><div class="num">Day '+permDays()+'</div>';
+  pc.innerHTML='<div class="lab">'+UItxt('perm_label')+'</div><div class="num">Day '+permDays()+'</div>';
   pc.style.display='none';
   document.getElementById('confirmNext').style.visibility='hidden';
   setTimeout(function(){ pc.style.display='block'; }, 1600);
@@ -569,35 +757,42 @@ function gotoFinalAch(){
 }
 /* finalNext → clear / reward */
 function gotoClear(){
-  document.getElementById('clearBox').innerHTML='<div class="ti">メインクエスト クリア　《 同袍 》</div>\n\n報酬を獲得：\n<span class="rw">結袂の環 ×1</span>\n<span class="rw">永久パーティメンバー ×1</span>\n\n称号：「同袍」';
+  document.getElementById('clearBox').innerHTML='<div class="ti">'+UItxt('questClear')+'</div>\n\n'+UItxt('rewardLabel')+'\n<span class="rw">'+UItxt('rewardRing')+'</span>\n<span class="rw">'+UItxt('rewardMember')+'</span>\n\n'+UItxt('titleLabel');
   show('s-clear');
   document.getElementById('openBtn').style.display='none';
   setTimeout(function(){ document.getElementById('openBtn').style.display='block'; }, 1600);
 }
 
 /* codex */
+function renderCodexPage(){
+  renderCodexTip();
+  document.getElementById('cTogether').innerHTML='<div class="lab">'+UItxt('together_label')+'</div><div class="num">'+togetherDays()+'<small>'+(curLang==='zh'?'天':curLang==='en'?' days':'日')+'</small></div>';
+  document.getElementById('cPerm').innerHTML='<div class="lab">'+UItxt('perm_label')+'</div><div class="num">Day '+permDays()+'</div>';
+  document.getElementById('achCount').textContent=UItxt('ach_count');
+  document.getElementById('replayBtn').textContent=UItxt('replay');
+  buildWall(document.getElementById('wall2'));
+}
 function goCodex(){
   document.body.classList.add('light');
-  renderCodexTip();
-  document.getElementById('cTogether').innerHTML='<div class="lab">連続パーティ継続</div><div class="num">'+togetherDays()+'<small>日</small></div>';
-  document.getElementById('cPerm').innerHTML='<div class="lab">永久パーティ</div><div class="num">Day '+permDays()+'</div>';
-  buildWall(document.getElementById('wall2'), true);
+  renderCodexPage();
   show('s-codex');
 }
 function replay(){ document.body.classList.remove('light'); revealed=false; curLang='ja'; sp=0;
   document.querySelectorAll('#lang button, #lang2 button').forEach(function(x){ x.classList.toggle('on', x.dataset.l==='ja'); });
   document.getElementById('knot').style.display=''; document.getElementById('affixlist').innerHTML='';
-  document.getElementById('affixNext').style.visibility='hidden'; document.getElementById('hh').textContent='飾り紐の紋様を長押しして解読';
+  document.getElementById('affixNext').style.visibility='hidden';
+  applyFlowLanguage();
   cancelHold(); renderItem(); show('s-intro'); }
 
 /* live tick */
 setInterval(function(){
-  document.querySelectorAll('.cnt-together').forEach(function(e){ e.textContent=togetherDays()+' 日'; });
+  document.querySelectorAll('.cnt-together').forEach(function(e){ e.textContent=togetherDays()+(curLang==='zh'?' 天':curLang==='en'?' days':' 日'); });
 }, 60000);
 
 /* init */
 window.addEventListener('load', function(){
   initKnot();
+  applyFlowLanguage();
   var k=document.getElementById('knot');
   k.addEventListener('pointerdown',startHold); k.addEventListener('pointerup',cancelHold);
   k.addEventListener('pointerleave',cancelHold); k.addEventListener('pointercancel',cancelHold);
@@ -613,9 +808,9 @@ window.addEventListener('load', function(){
 <!-- npc overlay -->
 <div class="overlay" id="overlay">
   <div class="npc">
-    <div class="who">〔 時の観測者 〕</div>
+    <div class="who" id="npcWho">〔 時の観測者 〕</div>
     <div class="line" id="npcLine"></div>
-    <button class="next" onclick="closeNPC()" style="margin-top:22px;">▸ 閉じる</button>
+    <button class="next" id="npcClose" onclick="closeNPC()" style="margin-top:22px;">▸ 閉じる</button>
   </div>
 </div>
 
